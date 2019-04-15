@@ -21,7 +21,7 @@ Please comment your code so we know what everything does.
   - inserting nop's in correct places
 ### - Implementing forwarding (currently working on this: no one)
   - Used for data hazards to not require a stall
-  - easier than you think
+  - easier than it sounds
 ### - Output Formatting (currently working on this: no one)
   - match output format with examples on pdf
 
