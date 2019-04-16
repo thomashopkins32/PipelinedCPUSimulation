@@ -5,7 +5,7 @@ Repository for CSCI 2500 Final Project.
 
 Please comment your code so we know what everything does.
 
-### - Handling Input (currently working on this: no one)
+### - Handling Input (currently working on this: Nick)
   - parse registers into an std::map<std::string, int>
   - create an instruction object for each line in the input file
     (including labels)
