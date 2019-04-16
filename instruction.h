@@ -2,14 +2,19 @@
 #define INSTRUCTION_H
 
 #include <vector>
+#include <iostream>
 #include <string>
 
-class instruction {
+class Instruction {
 public:
-  instruction(const std::string& line);
+  Instruction(const std::string& line);
+  void addToDependencies(const std::string & reg);
+  void addToRegNums(const int num);
+  void setType(const std::string & newType);
+  void printInstInfo();
 
 private:
-  std::vector<char> dependencies;
+  std::vector<std::string> dependencies;
   std::vector<int> regNum;
   std::string type;
   std::string output;
