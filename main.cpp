@@ -1,16 +1,44 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <iomanip>
+#include <sstream>
 #include <map>
 #include "instruction.h"
 
+/* Outputs the registers in a table like format */
 void outputRegisters(const std::map<std::string, int>& regs) {
+  std::cout << "\n";
+  std::map<std::string, int>::const_iterator itr = regs.begin();
+  int i = 0;
+  while(itr != regs.end()) {
+    std::ostringstream ss; // needed for setw() to work
+    ss << itr->first << " = " << itr->second;
+    std::cout << std::left << std::setw(20) << ss.str();
+    if(i % 4 == 0)
+      std::cout << std::endl;
+    ++i;
+  }
+}
 
+/* Prints the header of each CPU cycle */
+void initialPrint() {
+  std::cout << "----------------------------------------------------------------------------------\n";
+  std::cout << std::left << std::setw(20) << "CPU Cycles ===>";
+  for(int j = 1; j <= 16; ++j)
+    std::cout << std::setw(4) << j;
+  std::cout << std::endl;
 }
 
 int main(int argc, char* argv[]) {
   std::vector<Instruction> lines; // contains each instruction (including nops)
   std::map<std::string, int> registers; // contains registers and their values
+  // TODO: Take input from file
+
+
+
+
+  // Decide forwarding argument
   bool forwarding = false;
   if(argv[1] == "F")
     forwarding = true;
@@ -22,6 +50,8 @@ int main(int argc, char* argv[]) {
     std::cout << " (no forwarding)" << std::endl;
   int pc = 1; // Program counter, used for reading one line at a time
   for(int i = 0; i < 16; ++i) {
+    initialPrint();
+    // Loop up to current instruction
     for(int j = 0; j < pc; ++j) {
       int k = 0; // index at where to insert stage value
       int value = 0; // value of executed instruction
@@ -63,13 +93,18 @@ int main(int argc, char* argv[]) {
         else if(lines[j].type == "andi")
           value = registers[r1] & stoi(r2);
         else if(lines[j].type == "slt") {
-          value = 0;
+          if(registers[r1] < registers[r2])
+            value = 1;
         }
         else if(lines[j].type == "slti") {
-          value = 0;
+          if(registers[r1] < stoi(r2))
+            value = 1;
         }
         else if(lines[j].type == "beq") {
-          value = 0;
+          r1 = lines[j].dependencies[0];
+          r2 = lines[j].dependencies[1];
+          if(registers[r1] == registers[r2])
+            value = 1;
         }
       }
       // MEM stage
@@ -83,7 +118,11 @@ int main(int argc, char* argv[]) {
       else if(lines[j].stage == 4) {
         lines[j].output.insert(k, "WB");
         lines[j].output.erase(k, 1);
-        lines[j].dependencies[0] = value;
+        if(lines[j].type != "beq")
+          lines[j].dependencies[0] = value;
+        else { // execute jump
+
+        }
       }
     }
     // output all registers and their values

@@ -1,5 +1,7 @@
 #include "instruction.h"
 #include <iostream>
+#include <sstream>
+#include <iomanip>
 
 Instruction::Instruction(const std::string& line) {
   this->type = "";
@@ -25,7 +27,12 @@ Instruction::Instruction(const std::string& line) {
     this->dependencies.push_back(tmp);
     ++i;
   }
-  this->output = line + "\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\n";
+  std::ostringstream stringstream;
+  stringstream << std::left << std::setw(20) << line;
+  for(int i = 0; i < 16; ++i)
+    stringstream << std::setw(4) << ".";
+  stringstream << "\n";
+  this->output =  stringstream.str();
 }
 
 //Helper function to print the Instruction info
