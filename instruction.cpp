@@ -1,63 +1,44 @@
 #include "instruction.h"
+#include <iostream>
 
 Instruction::Instruction(const std::string& line) {
-  std::string temp = "";
-  std::string operation = "";
-  bool firstInstance = true;
-  for (int i = 0; i < line.size(); i++) {
-    //Get the current operation and store it in instruction object
-    if (i == 0) {
-      while (line[i] != ' ') {
-        operation += line[i];
-        if (line[i + 1] == ':') break; //handling "loop:" case
-        i++;
-      }
-    }
-    setType(operation); //assign operation to object type
-    if (operation == "loop") {
-      break;
-    }
-    //Get all registers in the line
-    if (line[i] == '$' && line[i + 1] != 'z') { //if register (and not $zero)
-      temp += line[i];
-      temp += line[i + 1];
-      temp += line[i + 2];
-      addToRegNums(temp[2] - '0');
-      if (!firstInstance) { //if we're not on the first register in the line
-      addToDependencies(temp);
-      }
-    temp.clear(); //clear to keep reading new registers
-    firstInstance = false;
-    }
+  this->type = "";
+  this->output = "";
+  this->stage = 0;
+  this->skip = 0;
+  // Get the current operation and store it in instruction object
+  // and assign operation to instruction type
+  int i = 0;
+  while (line[i] != ' ' && line[i] != ':') {
+    this->type += line[i];
+    i++;
   }
-}
-
-//Add string to dependencies vector
-void Instruction::addToDependencies(const std::string & reg) {
-  dependencies.push_back(reg);
-}
-
-//Add integer to regNum vector
-void Instruction::addToRegNums(const int num) {
-  regNum.push_back(num);
-}
-
-//Set the type of the instruction
-void Instruction::setType(const std::string & newType) {
-  type = newType;
+  if(line[i] == ':') return; // handles tag case
+  while(line[i] == ' ') ++i; // continue along line
+  while(i < line.length()) {
+    std::string tmp = "";
+    //Get all registers in the line
+    while(line[i] != ' ' && line[i] != '\n' && line[i] != ',') {
+        tmp += line[i];
+        ++i;
+    }
+    this->dependencies.push_back(tmp);
+    ++i;
+  }
+  this->output = line + "\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\t.\n";
 }
 
 //Helper function to print the Instruction info
 void Instruction::printInstInfo() {
+  std::cout << "OUTPUT: " << this->output << std::endl;
   std::cout << "DEPENDENCIES: ";
-  for (int i = 0; i < dependencies.size(); i++) {
-    if (i != dependencies.size() - 1) std::cout << dependencies[i] << ", ";
-    else std::cout << dependencies[i];
+  for (int i = 0; i < this->dependencies.size(); i++) {
+    if (i != this->dependencies.size() - 1)
+      std::cout << this->dependencies[i] << ", ";
+    else
+      std::cout << this->dependencies[i];
   }
-  std::cout << "\nREGISTER NUMBERS: ";
-  for (int i = 0; i < regNum.size(); i++) {
-    if (i != regNum.size() - 1) std::cout << regNum[i] << ", ";
-    else std::cout << regNum[i];
-  }
-  std::cout << "\nTYPE: " << type << std::endl;
+  std::cout << "\nTYPE: " << this->type << std::endl;
+  std::cout << "STAGE: " << this->stage << std::endl;
+  std::cout << "SKIP: " << this->skip << std::endl;
 }
