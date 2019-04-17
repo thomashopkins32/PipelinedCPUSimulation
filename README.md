@@ -12,14 +12,14 @@ Please comment your code so we know what everything does.
   - put each instruction in a vector of instructions
   - set up instruction object with useful variables for storing information in
     a line
-### - Pipelining structure (currently working on this: Tom)
-  - create basic structure for pipeline
-  - implement each step of the pipeline (IF, ID, EX, MEM, WB)
+### - Pipelining structure (Completed)
+  - ~~create basic structure for pipeline~~
+  - ~~implement each step of the pipeline (IF, ID, EX, MEM, WB)~~
 ### - Handling Hazards (currently working on this: Jason)
   - Data Hazards (exactly like homework 5)
   - Control Hazards (jumping and branching)
   - inserting nop's in correct places
-### - Implementing forwarding (currently working on this: no one)
+### - Implementing forwarding (currently working on this: Tom)
   - Used for data hazards to not require a stall
   - easier than it sounds
 ### - Output Formatting (currently working on this: no one)
