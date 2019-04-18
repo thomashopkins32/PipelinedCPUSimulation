@@ -7,18 +7,25 @@
 #include "instruction.h"
 
 /* Outputs the registers in a table like format */
-void outputRegisters(const std::map<std::string, int>& regs) {
+void outputRegisters(std::map<std::string, int>& regs) {
   std::cout << "\n";
-  std::map<std::string, int>::const_iterator itr = regs.begin();
-  int i = 0;
-  while(itr != regs.end()) {
-    std::ostringstream ss; // needed for setw() to work
-    ss << itr->first << " = " << itr->second;
+  for(int i = 0; i < 8; ++i) {
+    std::string tmp = "$s" + std::string(i);
+    std::ostringstream ss;
+    ss << tmp << " = " << regs[tmp];
     std::cout << std::left << std::setw(20) << ss.str();
     if(i % 4 == 0)
       std::cout << std::endl;
-    ++i;
   }
+  for(int i = 0; i < 10; ++i) {
+    std::string tmp = "$t" + std::string(i);
+    std::ostringstream ss;
+    ss << tmp << " = " << regs[tmp];
+    std::cout << std::left << std::setw(20) << ss.str();
+    if(i % 4 == 0)
+      std::cout << std::endl;
+  }
+  std::cout << std::endl;
 }
 
 /* Prints the header of each CPU cycle */
@@ -30,14 +37,25 @@ void initialPrint() {
   std::cout << std::endl;
 }
 
+void initRegisters(std::map<std::string, int>& regs) {
+  for(int i = 0; i < 8; ++i) {
+    std::string tmp = "$s" + std::to_string(i);
+    regs[tmp] = 0;
+  }
+  for(int i = 0; i < 10; ++i) {
+    std::string tmp = "$t" + std::to_string(i);
+    regs[tmp] = 0;
+  }
+}
+
 int main(int argc, char* argv[]) {
   std::vector<Instruction> lines; // contains each instruction (including nops)
   std::map<std::string, int> registers; // contains registers and their values
-  // TODO: Take input from file
+  // Take input from file
+  
 
-
-
-
+  // initialize register map
+  initRegisters(registers);
   // Decide forwarding argument
   bool forwarding = false;
   if(argv[1] == "F")
@@ -65,19 +83,19 @@ int main(int argc, char* argv[]) {
       // instructions are fetched and created here
       if(lines[j].stage == 0) {
         lines[j].output.insert(k, "IF");
-        lines[j].output.erase(k, 1);
+        lines[j].output.erase(k, 2);
       }
       // ID stage
       // data and control hazards are resolved here
       else if(lines[j].stage == 1) {
         lines[j].output.insert(k, "ID");
-        lines[j].output.erase(k, 1);
+        lines[j].output.erase(k, 2);
       }
       // EX stage
       // computation is made here
       else if(lines[j].stage == 2) {
         lines[j].output.insert(k, "EX");
-        lines[j].output.erase(k, 1);
+        lines[j].output.erase(k, 2);
         std::string r1 = lines[j].dependencies[1];
         std::string r2 = lines[j].dependencies[2];
         if(lines[j].type == "add")
@@ -111,13 +129,13 @@ int main(int argc, char* argv[]) {
       // memory is written here
       else if(lines[j].stage == 3) {
         lines[j].output.insert(k, "MEM");
-        lines[j].output.erase(k, 1);
+        lines[j].output.erase(k, 3);
       }
       // WB stage
       // registers are written here
       else if(lines[j].stage == 4) {
         lines[j].output.insert(k, "WB");
-        lines[j].output.erase(k, 1);
+        lines[j].output.erase(k, 2);
         if(lines[j].type != "beq")
           lines[j].dependencies[0] = value;
         else { // execute jump
