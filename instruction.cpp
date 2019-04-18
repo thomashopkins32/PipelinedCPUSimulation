@@ -8,6 +8,7 @@ Instruction::Instruction(const std::string& line) {
   this->output = "";
   this->stage = 0;
   this->skip = 0;
+  this->isNop = false;
   // Get the current operation and store it in instruction object
   // and assign operation to instruction type
   int i = 0;

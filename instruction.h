@@ -17,6 +17,7 @@ public:
   std::string output;
   int skip;
   int stage;
+  bool isNop;
 };
 
 #endif

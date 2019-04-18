@@ -6,6 +6,14 @@
 #include <map>
 #include "instruction.h"
 
+void insertNop(std::vector<Instruction> &lines, int i, int skip, int stage)
+{
+  Instruction nop("nop");
+  nop.skip = skip;
+  nop.stage = stage;
+  nop.isNop = true;
+  lines.insert(i, nop);
+}
 /* Outputs the registers in a table like format */
 void outputRegisters(std::map<std::string, int>& regs) {
   std::cout << "\n";
