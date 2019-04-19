@@ -5,13 +5,13 @@ Repository for CSCI 2500 Final Project.
 
 Please comment your code so we know what everything does.
 
-### - Handling Input (currently working on this: Nick)
-  - parse registers into an std::map<std::string, int>
-  - create an instruction object for each line in the input file
-    (including labels)
-  - put each instruction in a vector of instructions
-  - set up instruction object with useful variables for storing information in
-    a line
+### - Handling Input (Completed)
+  - ~~parse registers into an std::map<std::string, int>~~
+  - ~~create an instruction object for each line in the input file~~
+    ~~(including labels)~~
+  - ~~put each instruction in a vector of instructions~~
+  - ~~set up instruction object with useful variables for storing information in~~
+    ~~a line~~
 ### - Pipelining structure (Completed)
   - ~~create basic structure for pipeline~~
   - ~~implement each step of the pipeline (IF, ID, EX, MEM, WB)~~
