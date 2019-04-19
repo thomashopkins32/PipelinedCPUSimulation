@@ -8,6 +8,7 @@ Instruction::Instruction(const std::string& line) {
   this->output = "";
   this->stage = 0;
   this->skip = 0;
+  this->line = line;
   this->isNop = false;
   // Get the current operation and store it in instruction object
   // and assign operation to instruction type
@@ -49,4 +50,8 @@ void Instruction::printInstInfo() {
   std::cout << "\nTYPE: " << this->type << std::endl;
   std::cout << "STAGE: " << this->stage << std::endl;
   std::cout << "SKIP: " << this->skip << std::endl;
+}
+
+bool operator==(const Instruction& a, const Instruction& b) {
+  return a.line == b.line;
 }

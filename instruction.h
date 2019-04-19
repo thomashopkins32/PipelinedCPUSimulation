@@ -15,9 +15,12 @@ public:
   std::vector<std::string> dependencies;
   std::string type;
   std::string output;
+  std::string line;
   int skip;
   int stage;
   bool isNop;
 };
+
+bool operator==(const Instruction& a, const Instruction& b);
 
 #endif

@@ -4,6 +4,8 @@
 #include <iomanip>
 #include <sstream>
 #include <map>
+#include <algorithm>
+#include <fstream>
 #include "instruction.h"
 
 void insertNop(std::vector<Instruction> &lines, int i, int skip, int stage)
@@ -12,13 +14,15 @@ void insertNop(std::vector<Instruction> &lines, int i, int skip, int stage)
   nop.skip = skip;
   nop.stage = stage;
   nop.isNop = true;
-  lines.insert(i, nop);
+  std::vector<Instruction>::iterator itr;
+  itr = std::find(lines.begin(), lines.end(), lines[i]);
+  lines.insert(itr, nop);
 }
 /* Outputs the registers in a table like format */
 void outputRegisters(std::map<std::string, int>& regs) {
   std::cout << "\n";
   for(int i = 0; i < 8; ++i) {
-    std::string tmp = "$s" + std::string(i);
+    std::string tmp = "$s" + std::to_string(i);
     std::ostringstream ss;
     ss << tmp << " = " << regs[tmp];
     std::cout << std::left << std::setw(20) << ss.str();
@@ -26,7 +30,7 @@ void outputRegisters(std::map<std::string, int>& regs) {
       std::cout << std::endl;
   }
   for(int i = 0; i < 10; ++i) {
-    std::string tmp = "$t" + std::string(i);
+    std::string tmp = "$t" + std::to_string(i);
     std::ostringstream ss;
     ss << tmp << " = " << regs[tmp];
     std::cout << std::left << std::setw(20) << ss.str();
@@ -60,8 +64,20 @@ int main(int argc, char* argv[]) {
   std::vector<Instruction> lines; // contains each instruction (including nops)
   std::map<std::string, int> registers; // contains registers and their values
   // Take input from file
-  
-
+  if (argc != 3) {
+    std::cerr << "Usage: ./a.out [mode] [filename]" << std::endl;
+    return 1;
+  }
+  std::ifstream inputFile(argv[2]);
+  if(!inputFile) {
+    std::cerr << "Error with input file" << std::endl;
+    return 1;
+  }
+  for (std::string line; std::getline(inputFile, line);) {
+    Instruction tempInst(line); //Initialize instruction object with line info
+    lines.push_back(tempInst);
+    tempInst.printInstInfo();
+  }
   // initialize register map
   initRegisters(registers);
   // Decide forwarding argument
