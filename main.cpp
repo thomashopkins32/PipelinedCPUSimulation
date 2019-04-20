@@ -13,12 +13,26 @@ void insertNop(std::vector<Instruction> &lines, int i, int skip, int stage)
 {
   Instruction nop("nop");
   nop.skip = skip;
-  nop.stage = stage;
+  nop.stage = stage+1;
   nop.isNop = true;
+  int k = 0; // index at where to insert stage value
+  int tmp = nop.skip; // used to determine k lines[j].value
+  while(tmp != -1) {
+    ++k;
+    if(nop.output[k] == '.')
+      --tmp;
+  }
+  nop.output[k] = 'I';
+  nop.output[k+1] = 'F';
+  while(nop.output[k] != '.') ++k;
+  nop.output[k] = 'I';
+  nop.output[k+1] = 'D';
+  while(nop.output[k] != '.') ++k;
+  nop.output[k] = '*';
   lines.insert(lines.begin() + i - 1, nop);
 }
 //finds register index, -1 if not in array
-int findRegister(const std::vector<std::string> inUse, std::string reg)
+int findRegister(const std::vector<std::string>& inUse, const std::string& reg)
 {
   for (unsigned int i = 0; i < inUse.size(); i++)
   {
@@ -130,12 +144,15 @@ int main(int argc, char* argv[]) {
       // IF stage
       // instructions are fetched and created here
       if(lines[j].stage == 0) {
-        lines[j].output[k] = 'I';
-        lines[j].output[k+1] = 'F';
+        if(!lines[j].isNop) {
+          lines[j].output[k] = 'I';
+          lines[j].output[k+1] = 'F';
+        }
       }
       // ID stage
       // data and control hazards are resolved here
       else if(lines[j].stage == 1) {
+<<<<<<< HEAD
         lines[j].output[k] = 'I';
         lines[j].output[k+1] = 'D';
 
@@ -156,14 +173,41 @@ int main(int argc, char* argv[]) {
             lines[j].stage--;
             std::cout << lines[j+1].output;
             continue;
+=======
+        if(!lines[j].isNop) {
+          lines[j].output[k] = 'I';
+          lines[j].output[k+1] = 'D';
+          if(!forwarding) {
+            //check for dependencies
+            bool dependFound = false;
+            for (unsigned int l = 0; l < inUse.size(); l++)
+            {
+              if (inUse[l] == lines[j].dependencies[1] || inUse[l] == lines[j].dependencies[2])
+              {
+                dependFound = true;
+              }
+            }
+            if (dependFound)
+            {
+              insertNop(lines, i, lines[j].skip, 2);
+              lines[j].stage--;
+              std::cout << lines[j+1].output;
+              continue;
+            }
+>>>>>>> bcdc397d588501e0fa7909776866cdf0f891a7fa
           }
         }
       }
       // EX stage
       // computation is made here
       else if(lines[j].stage == 2) {
+<<<<<<< HEAD
 
         if (!forwarding)
+=======
+        //add product register to use to potential dependencies
+        if(lines[j].type != "beq")
+>>>>>>> bcdc397d588501e0fa7909776866cdf0f891a7fa
         {
           //add product register to use to potential dependencies
           if(lines[j].type != "beq") 
@@ -204,8 +248,6 @@ int main(int argc, char* argv[]) {
               lines[j].value = 1;
           }
         }
-        else // is a nop instruction
-          lines[j].output[k] = '*';
       }
       // MEM stage
       // memory is written here
@@ -217,6 +259,8 @@ int main(int argc, char* argv[]) {
         }
         else
           lines[j].output[k] = '*';
+        if(forwarding)
+          registers[lines[j].dependencies[0]] = lines[j].value;
       }
       // WB stage
       // registers are written here
@@ -232,6 +276,7 @@ int main(int argc, char* argv[]) {
         }
         else
           lines[j].output[k] = '*';
+<<<<<<< HEAD
 
         if (!forwarding)
         {
@@ -242,6 +287,14 @@ int main(int argc, char* argv[]) {
           //so if it does we know that something fucked up
           inUse.erase(inUse.begin() + regIndex);
         }
+=======
+        //remove product register from inUse
+        int regIndex = findRegister(inUse, lines[j].dependencies[0]);
+        //if this line causes a seg fault it's because it's trying to remove
+        //somthing that's not there, that shouldn't happen so I didn't make an if to check
+        //so if it does we know that something fucked up
+        inUse.erase(inUse.begin() + regIndex);
+>>>>>>> bcdc397d588501e0fa7909776866cdf0f891a7fa
       }
       std::cout << lines[j].output;
       ++lines[j].stage;

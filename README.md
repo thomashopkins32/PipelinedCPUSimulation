@@ -16,14 +16,14 @@ Please comment your code so we know what everything does.
   - ~~create basic structure for pipeline~~
   - ~~implement each step of the pipeline (IF, ID, EX, MEM, WB)~~
 ### - Handling Hazards (currently working on this: Jason)
-  - Data Hazards (exactly like homework 5)
+  - ~~Data Hazards (exactly like homework 5)~~
   - Control Hazards (jumping and branching)
-  - inserting nop's in correct places
-### - Implementing forwarding (currently working on this: Tom)
-  - Used for data hazards to not require a stall
-  - easier than it sounds
-### - Output Formatting (currently working on this: no one)
-  - match output format with examples on pdf
+  - ~~inserting nop's in correct places~~
+### - Implementing forwarding (Completed)
+  - ~~Used for data hazards to not require a stall~~
+  - ~~easier than it sounds~~
+### - Output Formatting (Completed)
+  - ~~match output format with examples on pdf~~
 
 Replace when you are done with each step
 - means unfinished
