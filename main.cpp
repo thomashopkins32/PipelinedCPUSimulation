@@ -15,9 +15,7 @@ void insertNop(std::vector<Instruction> &lines, int i, int skip, int stage)
   nop.skip = skip;
   nop.stage = stage;
   nop.isNop = true;
-  std::vector<Instruction>::iterator itr;
-  itr = std::find(lines.begin(), lines.end(), lines[i]);
-  lines.insert(itr, nop);
+  lines.insert(lines.begin() + i - 1, nop);
 }
 //finds register index, -1 if not in array
 int findRegister(const std::vector<std::string> inUse, std::string reg)
@@ -116,15 +114,15 @@ int main(int argc, char* argv[]) {
     std::cout << " (forwarding)" << std::endl;
   else
     std::cout << " (no forwarding)" << std::endl;
+  //
   unsigned pc = 1; // Program counter, used for reading one line at a time
   for(int i = 0; i < 16; ++i) {
     initialPrint();
     // Loop up to current instruction
     for(unsigned j = 0; j < pc; ++j) {
       int k = 0; // index at where to insert stage value
-      int value = 0; // value of executed instruction
-      int tmp = lines[j].skip; // used to determine k value
-      while(tmp != 0) {
+      int tmp = lines[j].skip; // used to determine k lines[j].value
+      while(tmp != -1) {
         ++k;
         if(lines[j].output[k] == '.')
           --tmp;
@@ -132,14 +130,14 @@ int main(int argc, char* argv[]) {
       // IF stage
       // instructions are fetched and created here
       if(lines[j].stage == 0) {
-        lines[j].output.insert(k, "IF");
-        lines[j].output.erase(k, 2);
+        lines[j].output[k] = 'I';
+        lines[j].output[k+1] = 'F';
       }
       // ID stage
       // data and control hazards are resolved here
       else if(lines[j].stage == 1) {
-        lines[j].output.insert(k, "ID");
-        lines[j].output.erase(k, 2);
+        lines[j].output[k] = 'I';
+        lines[j].output[k+1] = 'D';
 
         //check for dependencies
         bool dependFound = false;
@@ -159,67 +157,77 @@ int main(int argc, char* argv[]) {
       // EX stage
       // computation is made here
       else if(lines[j].stage == 2) {
-        lines[j].output.insert(k, "EX");
-        lines[j].output.erase(k, 2);
         //add product register to use to potential dependencies
         if(lines[j].type != "beq") 
         {
           inUse.push_back(lines[j].dependencies[0]);
         }
-
-        std::string r1 = lines[j].dependencies[1];
-        std::string r2 = lines[j].dependencies[2];
-        if(lines[j].type == "add")
-          value = registers[r1] + registers[r2];
-        else if(lines[j].type == "addi")
-          value = registers[r1] + stoi(r2);
-        else if(lines[j].type == "or")
-          value = registers[r1] | registers[r2];
-        else if(lines[j].type == "ori")
-          value = registers[r1] | stoi(r2);
-        else if(lines[j].type == "and")
-          value = registers[r1] & registers[r2];
-        else if(lines[j].type == "andi")
-          value = registers[r1] & stoi(r2);
-        else if(lines[j].type == "slt") {
-          if(registers[r1] < registers[r2])
-            value = 1;
+        if(!lines[j].isNop) {
+          lines[j].output[k] = 'E';
+          lines[j].output[k+1] = 'X';
+          std::string r1 = lines[j].dependencies[1];
+          std::string r2 = lines[j].dependencies[2];
+          if(lines[j].type == "add")
+            lines[j].value = registers[r1] + registers[r2];
+          else if(lines[j].type == "addi")
+            lines[j].value = registers[r1] + stoi(r2);
+          else if(lines[j].type == "or")
+            lines[j].value = registers[r1] | registers[r2];
+          else if(lines[j].type == "ori")
+            lines[j].value = registers[r1] | stoi(r2);
+          else if(lines[j].type == "and")
+            lines[j].value = registers[r1] & registers[r2];
+          else if(lines[j].type == "andi")
+            lines[j].value = registers[r1] & stoi(r2);
+          else if(lines[j].type == "slt") {
+            if(registers[r1] < registers[r2])
+              lines[j].value = 1;
+          }
+          else if(lines[j].type == "slti") {
+            if(registers[r1] < stoi(r2))
+              lines[j].value = 1;
+          }
+          else if(lines[j].type == "beq") {
+            r1 = lines[j].dependencies[0];
+            r2 = lines[j].dependencies[1];
+            if(registers[r1] == registers[r2])
+              lines[j].value = 1;
+          }
         }
-        else if(lines[j].type == "slti") {
-          if(registers[r1] < stoi(r2))
-            value = 1;
-        }
-        else if(lines[j].type == "beq") {
-          r1 = lines[j].dependencies[0];
-          r2 = lines[j].dependencies[1];
-          if(registers[r1] == registers[r2])
-            value = 1;
-        }
+        else // is a nop instruction
+          lines[j].output[k] = '*';
       }
       // MEM stage
       // memory is written here
       else if(lines[j].stage == 3) {
-        lines[j].output.insert(k, "MEM");
-        lines[j].output.erase(k, 3);
+        if(!lines[j].isNop) {
+          lines[j].output[k] = 'M';
+          lines[j].output[k+1] = 'E';
+          lines[j].output[k+2] = 'M';
+        }
+        else
+          lines[j].output[k] = '*';
       }
       // WB stage
       // registers are written here
       else if(lines[j].stage == 4) {
-        lines[j].output.insert(k, "WB");
-        lines[j].output.erase(k, 2);
-        
+        if(!lines[j].isNop) {
+          lines[j].output[k] = 'W';
+          lines[j].output[k+1] = 'B';
+          if(lines[j].type != "beq")
+            registers[lines[j].dependencies[0]] = lines[j].value;
+          else { // execute jump
+
+          }
+        }
+        else
+          lines[j].output[k] = '*';
         //remove product register from inUse
         int regIndex = findRegister(inUse, lines[j].dependencies[0]);
         //if this line causes a seg fault it's because it's trying to remove 
         //somthing that's not there, that shouldn't happen so I didn't make an if to check
         //so if it does we know that something fucked up
         inUse.erase(inUse.begin() + regIndex);
-
-        if(lines[j].type != "beq")
-          lines[j].dependencies[0] = value;
-        else { // execute jump
-
-        }
       }
       std::cout << lines[j].output;
       ++lines[j].stage;
@@ -228,7 +236,10 @@ int main(int argc, char* argv[]) {
     if(pc < lines.size())
       ++pc;
     outputRegisters(registers);
+    if(lines[lines.size()-1].stage == 5)
+      break;
   }
+  std::cout << "----------------------------------------------------------------------------------\n";
   std::cout << "END OF SIMULATION" << std::endl;
   return EXIT_SUCCESS;
 }
