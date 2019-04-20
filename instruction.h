@@ -18,6 +18,7 @@ public:
   std::string line;
   int skip;
   int stage;
+  int value;
   bool isNop;
   bool isLabel;
 };

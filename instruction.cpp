@@ -10,6 +10,7 @@ Instruction::Instruction(const std::string& line) {
   this->stage = 0;
   this->skip = 0;
   this->line = line;
+  this->value = 0;
   this->isNop = false;
   this->isLabel = false;
   // Get the current operation and store it in instruction object
