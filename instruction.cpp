@@ -29,7 +29,7 @@ Instruction::Instruction(const std::string& line) {
   //Get all registers in the line
   std::string tmp = "";
   for(unsigned j = i; j < line.length(); ++j) {
-    if(line[j] == ',' || line[j] == '\n') {
+    if(line[j] == ',' || line[j] == '\n' || line[j] == '\r') {
       this->dependencies.push_back(tmp);
       tmp = "";
     }
