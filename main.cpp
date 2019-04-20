@@ -6,6 +6,7 @@
 #include <map>
 #include <algorithm>
 #include <fstream>
+#include <cstring>
 #include "instruction.h"
 
 void insertNop(std::vector<Instruction> &lines, int i, int skip, int stage)
@@ -26,7 +27,7 @@ void outputRegisters(std::map<std::string, int>& regs) {
     std::ostringstream ss;
     ss << tmp << " = " << regs[tmp];
     std::cout << std::left << std::setw(20) << ss.str();
-    if(i % 4 == 0)
+    if((i+1) % 4 == 0)
       std::cout << std::endl;
   }
   for(int i = 0; i < 10; ++i) {
@@ -34,7 +35,7 @@ void outputRegisters(std::map<std::string, int>& regs) {
     std::ostringstream ss;
     ss << tmp << " = " << regs[tmp];
     std::cout << std::left << std::setw(20) << ss.str();
-    if(i % 4 == 0)
+    if((i+1) % 4 == 0)
       std::cout << std::endl;
   }
   std::cout << std::endl;
@@ -58,6 +59,7 @@ void initRegisters(std::map<std::string, int>& regs) {
     std::string tmp = "$t" + std::to_string(i);
     regs[tmp] = 0;
   }
+  regs["$zero"] = 0;
 }
 
 int main(int argc, char* argv[]) {
@@ -76,25 +78,36 @@ int main(int argc, char* argv[]) {
   for (std::string line; std::getline(inputFile, line);) {
     Instruction tempInst(line); //Initialize instruction object with line info
     lines.push_back(tempInst);
-    tempInst.printInstInfo();
   }
+
   // initialize register map
   initRegisters(registers);
   // Decide forwarding argument
   bool forwarding = false;
-  if(argv[1] == "F")
+  if(strcmp(argv[1], "F") == 0)
     forwarding = true;
+  // initialize stages
+  int count = 0;
+  for(unsigned i = 0; i < lines.size(); ++i) {
+    if(!lines[i].isLabel)
+      ++count;
+    // lines[i].stage -= count-1;
+    lines[i].skip += count-1;
+  }
+  for(unsigned i = 0; i < lines.size(); ++i) {
+    lines[i].printInstInfo();
+  }
   // Starting simulation assuming that all instructions are ready
   std::cout << "START OF SIMULATION";
   if(forwarding)
     std::cout << " (forwarding)" << std::endl;
   else
     std::cout << " (no forwarding)" << std::endl;
-  int pc = 1; // Program counter, used for reading one line at a time
+  unsigned pc = 1; // Program counter, used for reading one line at a time
   for(int i = 0; i < 16; ++i) {
     initialPrint();
     // Loop up to current instruction
-    for(int j = 0; j < pc; ++j) {
+    for(unsigned j = 0; j < pc; ++j) {
       int k = 0; // index at where to insert stage value
       int value = 0; // value of executed instruction
       int tmp = lines[j].skip; // used to determine k value
@@ -166,8 +179,12 @@ int main(int argc, char* argv[]) {
 
         }
       }
+      std::cout << lines[j].output;
+      ++lines[j].stage;
     }
     // output all registers and their values
+    if(pc < lines.size())
+      ++pc;
     outputRegisters(registers);
   }
   std::cout << "END OF SIMULATION" << std::endl;

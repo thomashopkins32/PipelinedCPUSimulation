@@ -19,6 +19,7 @@ public:
   int skip;
   int stage;
   bool isNop;
+  bool isLabel;
 };
 
 bool operator==(const Instruction& a, const Instruction& b);

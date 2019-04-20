@@ -2,6 +2,7 @@
 #include <iostream>
 #include <sstream>
 #include <iomanip>
+#include <cstring>
 
 Instruction::Instruction(const std::string& line) {
   this->type = "";
@@ -10,6 +11,7 @@ Instruction::Instruction(const std::string& line) {
   this->skip = 0;
   this->line = line;
   this->isNop = false;
+  this->isLabel = false;
   // Get the current operation and store it in instruction object
   // and assign operation to instruction type
   int i = 0;
@@ -17,18 +19,24 @@ Instruction::Instruction(const std::string& line) {
     this->type += line[i];
     i++;
   }
-  if(line[i] == ':') return; // handles tag case
-  while(line[i] == ' ') ++i; // continue along line
-  while(i < line.length()) {
-    std::string tmp = "";
-    //Get all registers in the line
-    while(line[i] != ' ' && line[i] != '\n' && line[i] != ',') {
-        tmp += line[i];
-        ++i;
-    }
-    this->dependencies.push_back(tmp);
-    ++i;
+  // handles tag case
+  if(line[i] == ':') {
+    this->isLabel = true;
+    return;
   }
+  while(line[i] == ' ') ++i; // continue along line
+  //Get all registers in the line
+  std::string tmp = "";
+  for(unsigned j = i; j < line.length(); ++j) {
+    if(line[j] == ',' || line[j] == '\n') {
+      this->dependencies.push_back(tmp);
+      tmp = "";
+    }
+    else
+      tmp += line[j];
+  }
+  this->dependencies.push_back(tmp);
+  //Generate output line
   std::ostringstream stringstream;
   stringstream << std::left << std::setw(20) << line;
   for(int i = 0; i < 16; ++i)
@@ -39,19 +47,15 @@ Instruction::Instruction(const std::string& line) {
 
 //Helper function to print the Instruction info
 void Instruction::printInstInfo() {
-  std::cout << "OUTPUT: " << this->output << std::endl;
+  std::cout << "OUTPUT: " << this->output;
   std::cout << "DEPENDENCIES: ";
-  for (int i = 0; i < this->dependencies.size(); i++) {
-    if (i != this->dependencies.size() - 1)
-      std::cout << this->dependencies[i] << ", ";
-    else
-      std::cout << this->dependencies[i];
-  }
+  for (unsigned i = 0; i < this->dependencies.size(); i++)
+    std::cout << this->dependencies[i] << " ";
   std::cout << "\nTYPE: " << this->type << std::endl;
   std::cout << "STAGE: " << this->stage << std::endl;
   std::cout << "SKIP: " << this->skip << std::endl;
 }
 
 bool operator==(const Instruction& a, const Instruction& b) {
-  return a.line == b.line;
+  return strcmp(a.line.c_str(), b.line.c_str()) == 0;
 }
