@@ -105,9 +105,9 @@ int main(int argc, char* argv[]) {
     // lines[i].stage -= count-1;
     lines[i].skip += count-1;
   }
-  for(unsigned i = 0; i < lines.size(); ++i) {
-    lines[i].printInstInfo();
-  }
+  // for(unsigned i = 0; i < lines.size(); ++i) {
+  //   lines[i].printInstInfo();
+  // }
   // Starting simulation assuming that all instructions are ready
   std::cout << "START OF SIMULATION";
   if(forwarding)
@@ -139,29 +139,39 @@ int main(int argc, char* argv[]) {
         lines[j].output[k] = 'I';
         lines[j].output[k+1] = 'D';
 
-        //check for dependencies
-        bool dependFound = false;
-        for (unsigned int l = 0; l < inUse.size(); l++)
+        if (!forwarding)
         {
-          if (inUse[l] == lines[j].dependencies[1] || inUse[l] == lines[j].dependencies[2])
+          //check for dependencies
+          bool dependFound = false;
+          for (unsigned int l = 0; l < inUse.size(); l++)
           {
-            dependFound = true;
+            if (inUse[l] == lines[j].dependencies[1] || inUse[l] == lines[j].dependencies[2])
+            {
+              dependFound = true;
+            }
           }
-        }
-        if (dependFound)
-        {
-          insertNop(lines, i, lines[j].skip, 2);
-          lines[j].stage--;
+          if (dependFound)
+          {
+            insertNop(lines, i, lines[j].skip, 2);
+            lines[j].stage--;
+            std::cout << lines[j+1].output;
+            continue;
+          }
         }
       }
       // EX stage
       // computation is made here
       else if(lines[j].stage == 2) {
-        //add product register to use to potential dependencies
-        if(lines[j].type != "beq") 
+
+        if (!forwarding)
         {
-          inUse.push_back(lines[j].dependencies[0]);
+          //add product register to use to potential dependencies
+          if(lines[j].type != "beq") 
+          {
+            inUse.push_back(lines[j].dependencies[0]);
+          }
         }
+
         if(!lines[j].isNop) {
           lines[j].output[k] = 'E';
           lines[j].output[k+1] = 'X';
@@ -222,12 +232,16 @@ int main(int argc, char* argv[]) {
         }
         else
           lines[j].output[k] = '*';
-        //remove product register from inUse
-        int regIndex = findRegister(inUse, lines[j].dependencies[0]);
-        //if this line causes a seg fault it's because it's trying to remove 
-        //somthing that's not there, that shouldn't happen so I didn't make an if to check
-        //so if it does we know that something fucked up
-        inUse.erase(inUse.begin() + regIndex);
+
+        if (!forwarding)
+        {
+          //remove product register from inUse
+          int regIndex = findRegister(inUse, lines[j].dependencies[0]);
+          //if this line causes a seg fault it's because it's trying to remove 
+          //somthing that's not there, that shouldn't happen so I didn't make an if to check
+          //so if it does we know that something fucked up
+          inUse.erase(inUse.begin() + regIndex);
+        }
       }
       std::cout << lines[j].output;
       ++lines[j].stage;
