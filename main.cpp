@@ -19,6 +19,18 @@ void insertNop(std::vector<Instruction> &lines, int i, int skip, int stage)
   itr = std::find(lines.begin(), lines.end(), lines[i]);
   lines.insert(itr, nop);
 }
+//finds register index, -1 if not in array
+int findRegister(const std::vector<std::string> inUse, std::string reg)
+{
+  for (unsigned int i = 0; i < inUse.size(); i++)
+  {
+    if (inUse[i] == reg)
+    {
+      return i;
+    }
+  }
+  return -1;
+}
 /* Outputs the registers in a table like format */
 void outputRegisters(std::map<std::string, int>& regs) {
   std::cout << "\n";
@@ -65,6 +77,7 @@ void initRegisters(std::map<std::string, int>& regs) {
 int main(int argc, char* argv[]) {
   std::vector<Instruction> lines; // contains each instruction (including nops)
   std::map<std::string, int> registers; // contains registers and their values
+  std::vector<std::string> inUse;
   // Take input from file
   if (argc != 3) {
     std::cerr << "Usage: ./a.out [mode] [filename]" << std::endl;
@@ -127,12 +140,33 @@ int main(int argc, char* argv[]) {
       else if(lines[j].stage == 1) {
         lines[j].output.insert(k, "ID");
         lines[j].output.erase(k, 2);
+
+        //check for dependencies
+        bool dependFound = false;
+        for (unsigned int l = 0; l < inUse.size(); l++)
+        {
+          if (inUse[l] == lines[j].dependencies[1] || inUse[l] == lines[j].dependencies[2])
+          {
+            dependFound = true;
+          }
+        }
+        if (dependFound)
+        {
+          insertNop(lines, i, lines[j].skip, 2);
+          lines[j].stage--;
+        }
       }
       // EX stage
       // computation is made here
       else if(lines[j].stage == 2) {
         lines[j].output.insert(k, "EX");
         lines[j].output.erase(k, 2);
+        //add product register to use to potential dependencies
+        if(lines[j].type != "beq") 
+        {
+          inUse.push_back(lines[j].dependencies[0]);
+        }
+
         std::string r1 = lines[j].dependencies[1];
         std::string r2 = lines[j].dependencies[2];
         if(lines[j].type == "add")
@@ -173,6 +207,14 @@ int main(int argc, char* argv[]) {
       else if(lines[j].stage == 4) {
         lines[j].output.insert(k, "WB");
         lines[j].output.erase(k, 2);
+        
+        //remove product register from inUse
+        int regIndex = findRegister(inUse, lines[j].dependencies[0]);
+        //if this line causes a seg fault it's because it's trying to remove 
+        //somthing that's not there, that shouldn't happen so I didn't make an if to check
+        //so if it does we know that something fucked up
+        inUse.erase(inUse.begin() + regIndex);
+
         if(lines[j].type != "beq")
           lines[j].dependencies[0] = value;
         else { // execute jump
