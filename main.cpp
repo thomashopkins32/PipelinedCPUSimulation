@@ -16,12 +16,11 @@ void loop(std::vector<Instruction>& lines, int i, int j) {
       lines[i+k].skip = i+k;
     }
   }
-
 }
 
 void insertNop(std::vector<Instruction> &lines, int i, int skip, int stage)
 {
-  Instruction nop("nop");
+  Instruction nop("nop ");
   nop.skip = skip;
   nop.stage = stage+1;
   nop.isNop = true;
@@ -60,17 +59,25 @@ void outputRegisters(std::map<std::string, int>& regs) {
     std::string tmp = "$s" + std::to_string(i);
     std::ostringstream ss;
     ss << tmp << " = " << regs[tmp];
-    std::cout << std::left << std::setw(20) << ss.str();
-    if((i+1) % 4 == 0)
-      std::cout << std::endl;
+    if((i+1) % 4 != 0 && i != 7)
+      std::cout << std::left << std::setw(20) << ss.str();
+    else {
+      std::cout << std::left << ss.str();
+      if(i != 8)
+        std::cout << std::endl;
+    }
   }
   for(int i = 0; i < 10; ++i) {
     std::string tmp = "$t" + std::to_string(i);
     std::ostringstream ss;
     ss << tmp << " = " << regs[tmp];
-    std::cout << std::left << std::setw(20) << ss.str();
-    if((i+1) % 4 == 0)
-      std::cout << std::endl;
+    if((i+1) % 4 != 0 && i != 9)
+      std::cout << std::left << std::setw(20) << ss.str();
+    else {
+      std::cout << std::left << ss.str();
+      if(i != 9)
+        std::cout << std::endl;
+    }
   }
   std::cout << std::endl;
 }
@@ -79,8 +86,12 @@ void outputRegisters(std::map<std::string, int>& regs) {
 void initialPrint() {
   std::cout << "----------------------------------------------------------------------------------\n";
   std::cout << std::left << std::setw(20) << "CPU Cycles ===>";
-  for(int j = 1; j <= 16; ++j)
-    std::cout << std::setw(4) << j;
+  for(int j = 1; j <= 16; ++j) {
+    if(j == 16)
+      std::cout << j;
+    else
+      std::cout << std::setw(4) << j;
+  }
   std::cout << std::endl;
 }
 
@@ -129,18 +140,19 @@ int main(int argc, char* argv[]) {
     // lines[i].stage -= count-1;
     lines[i].skip += count-1;
   }
-  for(unsigned i = 0; i < lines.size(); ++i) {
-    lines[i].printInstInfo();
-  }
+  // for(unsigned i = 0; i < lines.size(); ++i) {
+  //   lines[i].printInstInfo();
+  // }
   // Starting simulation assuming that all instructions are ready
   std::cout << "START OF SIMULATION";
   if(forwarding)
     std::cout << " (forwarding)" << std::endl;
   else
     std::cout << " (no forwarding)" << std::endl;
-  //
   unsigned pc = 1; // Program counter, used for reading one line at a time
   for(int i = 0; i < 16; ++i) {
+    // for(unsigned j = 0; j < lines.size(); ++j)
+    //   lines[j].printInstInfo();
     if(lines[pc-1].isLabel) {
       if(pc < lines.size())
         ++pc;
@@ -175,7 +187,6 @@ int main(int argc, char* argv[]) {
           if(!forwarding) {
             //check for dependencies
             bool dependFound = false;
-            int distance = 0;
             for (unsigned int l = 0; l < inUse.size(); l++)
             {
               if (inUse[l] == lines[j].dependencies[1] || inUse[l] == lines[j].dependencies[2])
@@ -185,12 +196,7 @@ int main(int argc, char* argv[]) {
             }
             if (dependFound)
             {
-              if(distance == 1)
-                insertNop(lines, i, lines[j].skip, 2);
-              else {
-                insertNop(lines, i, lines[j].skip, 2);
-                insertNop(lines, i, lines[j].skip, 2);
-              }
+              insertNop(lines, i, lines[j].skip, 2);
               lines[j].stage--;
               std::cout << lines[j+1].output;
               continue;

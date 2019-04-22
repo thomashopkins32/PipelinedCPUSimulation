@@ -40,8 +40,12 @@ Instruction::Instruction(const std::string& line) {
   //Generate output line
   std::ostringstream stringstream;
   stringstream << std::left << std::setw(20) << line;
-  for(int i = 0; i < 16; ++i)
-    stringstream << std::setw(4) << ".";
+  for(int i = 0; i < 16; ++i) {
+    if(i == 15)
+      stringstream << ".";
+    else
+      stringstream << std::setw(4) << ".";
+  }
   stringstream << "\n";
   this->output =  stringstream.str();
 }
@@ -51,10 +55,10 @@ Instruction::Instruction(const Instruction& instr) {
   this->dependencies = instr.dependencies;
   this->type = instr.type;
   this->line = instr.line;
-  this->skip = 0;
-  this->stage = 0;
-  this->value = 0;
-  this->isNop = false;
+  this->skip = instr.skip;
+  this->stage = instr.stage;
+  this->value = instr.value;
+  this->isNop = instr.isNop;
   this->isLabel = instr.isLabel;
 }
 
