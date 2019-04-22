@@ -9,11 +9,26 @@
 #include <cstring>
 #include "instruction.h"
 
-void loop(std::vector<Instruction>& lines, int i, int j) {
-  for(int k = j+1; k <= i; ++k) {
+void loop(std::vector<Instruction>& lines, int j) {
+  unsigned tmp = lines.size();
+  for(unsigned k = j+1; k < tmp; ++k) {
     if(!lines[k].isNop) {
-      lines.insert(lines.begin()+i+k, Instruction(lines[k]));
-      lines[i+k].skip = i+k;
+      lines.push_back(Instruction(lines[k]));
+      unsigned index = lines.size()-1;
+      lines[index].skip = index-1;
+      lines[index].stage = 0;
+      lines[index].value = 0;
+      //Generate output line
+      std::ostringstream stringstream;
+      stringstream << std::left << std::setw(20) << lines[index].line;
+      for(int i = 0; i < 16; ++i) {
+        if(i == 15)
+          stringstream << ".";
+        else
+          stringstream << std::setw(4) << ".";
+      }
+      stringstream << "\n";
+      lines[index].output =  stringstream.str();
     }
   }
 }
@@ -150,7 +165,7 @@ int main(int argc, char* argv[]) {
   else
     std::cout << " (no forwarding)" << std::endl;
   unsigned pc = 1; // Program counter, used for reading one line at a time
-  for(int i = 0; i < 16; ++i) {
+  for(int i = 0; i <= 16; ++i) {
     // for(unsigned j = 0; j < lines.size(); ++j)
     //   lines[j].printInstInfo();
     if(lines[pc-1].isLabel) {
@@ -161,7 +176,9 @@ int main(int argc, char* argv[]) {
     initialPrint();
     // Loop up to current instruction
     for(unsigned j = 0; j < pc; ++j) {
-      int k = 0; // index at where to insert stage value
+      if(lines[j].isLabel)
+        continue;
+      unsigned k = 0; // index at where to insert stage value
       int tmp = lines[j].skip; // used to determine k lines[j].value
       while(tmp != -1) {
         ++k;
@@ -174,6 +191,8 @@ int main(int argc, char* argv[]) {
         if(!lines[j].isNop) {
           lines[j].output[k] = 'I';
           lines[j].output[k+1] = 'F';
+          if(k+2 == lines[j].output.length())
+            lines[j].output += "\n";
         }
         else
           lines[j].output[k] = '*';
@@ -184,6 +203,8 @@ int main(int argc, char* argv[]) {
         if(!lines[j].isNop) {
           lines[j].output[k] = 'I';
           lines[j].output[k+1] = 'D';
+          if(k+2 == lines[j].output.length())
+            lines[j].output += "\n";
           if(!forwarding) {
             //check for dependencies
             bool dependFound = false;
@@ -196,7 +217,7 @@ int main(int argc, char* argv[]) {
             }
             if (dependFound)
             {
-              insertNop(lines, i, lines[j].skip, 2);
+              insertNop(lines, pc, lines[j].skip, 2);
               lines[j].stage--;
               std::cout << lines[j+1].output;
               continue;
@@ -217,6 +238,8 @@ int main(int argc, char* argv[]) {
         if(!lines[j].isNop) {
           lines[j].output[k] = 'E';
           lines[j].output[k+1] = 'X';
+          if(k+2 == lines[j].output.length())
+            lines[j].output += "\n";
           std::string r1 = lines[j].dependencies[1];
           std::string r2 = lines[j].dependencies[2];
           if(lines[j].type == "add")
@@ -246,6 +269,8 @@ int main(int argc, char* argv[]) {
               lines[j].value = 1;
           }
         }
+        else
+          lines[j].output[k] = '*';
       }
       // MEM stage
       // memory is written here
@@ -253,7 +278,10 @@ int main(int argc, char* argv[]) {
         if(!lines[j].isNop) {
           lines[j].output[k] = 'M';
           lines[j].output[k+1] = 'E';
-          lines[j].output[k+2] = 'M';
+          if(k+2 == lines[j].output.length())
+            lines[j].output += "M\n";
+          else
+            lines[j].output[k+2] = 'M';
         }
         else
           lines[j].output[k] = '*';
@@ -266,20 +294,23 @@ int main(int argc, char* argv[]) {
         if(!lines[j].isNop) {
           lines[j].output[k] = 'W';
           lines[j].output[k+1] = 'B';
+          if(k+2 == lines[j].output.length())
+            lines[j].output += "\n";
           if(lines[j].type != "bne")
             registers[lines[j].dependencies[0]] = lines[j].value;
           else { // execute jump
             if(lines[j].value == 1) {
               // set next three instructions to nops
-              lines[j+1].isNop = true;
-              lines[j+2].isNop = true;
-              lines[j+3].isNop = true;
               unsigned k = 0;
               for(k = 0; k < lines.size(); ++k) {
                 if(lines[j].dependencies[2] == lines[k].type)
                   break;
               }
-              loop(lines, j, k); // need to unroll loop into vector
+              loop(lines, k); // need to unroll loop into vector
+              lines[j+1].isNop = true;
+              lines[j+2].isNop = true;
+              lines[j+3].isNop = true;
+              ++pc;
             }
           }
         }
