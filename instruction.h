@@ -9,6 +9,7 @@ class Instruction {
 public:
   //constructor
   Instruction(const std::string& line);
+  Instruction(const Instruction& instr);
   //debugging helper
   void printInstInfo();
   //member variable (keep public)

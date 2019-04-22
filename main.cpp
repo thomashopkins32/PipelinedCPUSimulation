@@ -9,6 +9,16 @@
 #include <cstring>
 #include "instruction.h"
 
+void loop(std::vector<Instruction>& lines, int i, int j) {
+  for(int k = j+1; k <= i; ++k) {
+    if(!lines[k].isNop) {
+      lines.insert(lines.begin()+i+k, Instruction(lines[k]));
+      lines[i+k].skip = i+k;
+    }
+  }
+
+}
+
 void insertNop(std::vector<Instruction> &lines, int i, int skip, int stage)
 {
   Instruction nop("nop");
@@ -131,6 +141,11 @@ int main(int argc, char* argv[]) {
   //
   unsigned pc = 1; // Program counter, used for reading one line at a time
   for(int i = 0; i < 16; ++i) {
+    if(lines[pc-1].isLabel) {
+      if(pc < lines.size())
+        ++pc;
+      continue;
+    }
     initialPrint();
     // Loop up to current instruction
     for(unsigned j = 0; j < pc; ++j) {
@@ -148,6 +163,8 @@ int main(int argc, char* argv[]) {
           lines[j].output[k] = 'I';
           lines[j].output[k+1] = 'F';
         }
+        else
+          lines[j].output[k] = '*';
       }
       // ID stage
       // data and control hazards are resolved here
@@ -158,6 +175,7 @@ int main(int argc, char* argv[]) {
           if(!forwarding) {
             //check for dependencies
             bool dependFound = false;
+            int distance = 0;
             for (unsigned int l = 0; l < inUse.size(); l++)
             {
               if (inUse[l] == lines[j].dependencies[1] || inUse[l] == lines[j].dependencies[2])
@@ -167,13 +185,20 @@ int main(int argc, char* argv[]) {
             }
             if (dependFound)
             {
-              insertNop(lines, i, lines[j].skip, 2);
+              if(distance == 1)
+                insertNop(lines, i, lines[j].skip, 2);
+              else {
+                insertNop(lines, i, lines[j].skip, 2);
+                insertNop(lines, i, lines[j].skip, 2);
+              }
               lines[j].stage--;
               std::cout << lines[j+1].output;
               continue;
             }
           }
         }
+        else
+          lines[j].output[k] = '*';
       }
       // EX stage
       // computation is made here
@@ -208,10 +233,10 @@ int main(int argc, char* argv[]) {
             if(registers[r1] < stoi(r2))
               lines[j].value = 1;
           }
-          else if(lines[j].type == "beq") {
+          else if(lines[j].type == "bne") {
             r1 = lines[j].dependencies[0];
             r2 = lines[j].dependencies[1];
-            if(registers[r1] == registers[r2])
+            if(registers[r1] != registers[r2])
               lines[j].value = 1;
           }
         }
@@ -235,10 +260,21 @@ int main(int argc, char* argv[]) {
         if(!lines[j].isNop) {
           lines[j].output[k] = 'W';
           lines[j].output[k+1] = 'B';
-          if(lines[j].type != "beq")
+          if(lines[j].type != "bne")
             registers[lines[j].dependencies[0]] = lines[j].value;
           else { // execute jump
-
+            if(lines[j].value == 1) {
+              // set next three instructions to nops
+              lines[j+1].isNop = true;
+              lines[j+2].isNop = true;
+              lines[j+3].isNop = true;
+              unsigned k = 0;
+              for(k = 0; k < lines.size(); ++k) {
+                if(lines[j].dependencies[2] == lines[k].type)
+                  break;
+              }
+              loop(lines, j, k); // need to unroll loop into vector
+            }
           }
         }
         else

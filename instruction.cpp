@@ -46,6 +46,18 @@ Instruction::Instruction(const std::string& line) {
   this->output =  stringstream.str();
 }
 
+Instruction::Instruction(const Instruction& instr) {
+  this->output = instr.output;
+  this->dependencies = instr.dependencies;
+  this->type = instr.type;
+  this->line = instr.line;
+  this->skip = 0;
+  this->stage = 0;
+  this->value = 0;
+  this->isNop = false;
+  this->isLabel = instr.isLabel;
+}
+
 //Helper function to print the Instruction info
 void Instruction::printInstInfo() {
   std::cout << "OUTPUT: " << this->output;
