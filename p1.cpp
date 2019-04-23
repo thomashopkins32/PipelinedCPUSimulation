@@ -51,8 +51,6 @@ void insertNop(std::vector<Instruction> &lines, int i, int skip, int stage)
   while(nop.output[k] != '.') ++k;
   nop.output[k] = 'I';
   nop.output[k+1] = 'D';
-  while(nop.output[k] != '.') ++k;
-  nop.output[k] = '*';
   lines.insert(lines.begin() + i - 1, nop);
 }
 
@@ -310,8 +308,6 @@ int main(int argc, char* argv[]) {
         }
         else
           lines[j].output[k] = '*';
-        // if(forwarding)
-        //   registers[lines[j].dependencies[0]] = lines[j].value;
       }
       // WB stage
       // registers are written here
