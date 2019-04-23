@@ -285,8 +285,8 @@ int main(int argc, char* argv[]) {
         }
         else
           lines[j].output[k] = '*';
-        if(forwarding)
-          registers[lines[j].dependencies[0]] = lines[j].value;
+        // if(forwarding)
+        //   registers[lines[j].dependencies[0]] = lines[j].value;
       }
       // WB stage
       // registers are written here
