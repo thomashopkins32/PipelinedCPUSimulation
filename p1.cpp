@@ -55,12 +55,13 @@ void insertNop(std::vector<Instruction> &lines, int i, int skip, int stage)
   nop.output[k] = '*';
   lines.insert(lines.begin() + i - 1, nop);
 }
+
 //finds register index, -1 if not in array
-int findRegister(const std::vector<std::string>& inUse, const std::string& reg)
+int findRegister(const std::vector<std::pair<std::string,int>>& inUse, const std::string& reg)
 {
   for (unsigned int i = 0; i < inUse.size(); i++)
   {
-    if (inUse[i] == reg)
+    if (inUse[i].first == reg)
     {
       return i;
     }
@@ -125,7 +126,7 @@ void initRegisters(std::map<std::string, int>& regs) {
 int main(int argc, char* argv[]) {
   std::vector<Instruction> lines; // contains each instruction (including nops)
   std::map<std::string, int> registers; // contains registers and their values
-  std::vector<std::string> inUse;
+  std::vector<std::pair<std::string, int>> inUse;
   // Take input from file
   if (argc != 3) {
     std::cerr << "Usage: ./a.out [mode] [filename]" << std::endl;
@@ -147,6 +148,12 @@ int main(int argc, char* argv[]) {
   bool forwarding = false;
   if(strcmp(argv[1], "F") == 0)
     forwarding = true;
+
+  bool toInsert = false;
+  bool twoInsert = false;
+  int cooldown = 0;
+  int holdJ = -1;
+
   // initialize stages
   int count = 0;
   for(unsigned i = 0; i < lines.size(); ++i) {
@@ -162,13 +169,14 @@ int main(int argc, char* argv[]) {
   else
     std::cout << " (no forwarding)" << std::endl;
   unsigned pc = 1; // Program counter, used for reading one line at a time
-  for(int i = 0; i <= 16; ++i) {
+  for(unsigned i = 0; i <= 16; ++i) {
     if(lines[pc-1].isLabel) {
       if(pc < lines.size())
         ++pc;
       continue;
     }
     initialPrint();
+    bool stallRest = false;
     // Loop up to current instruction
     for(unsigned j = 0; j < pc; ++j) {
       if(lines[j].isLabel)
@@ -202,20 +210,42 @@ int main(int argc, char* argv[]) {
             lines[j].output += "\n";
           if(!forwarding) {
             //check for dependencies
-            bool dependFound = false;
+            bool far = false;
+            bool close = false;
             for (unsigned int l = 0; l < inUse.size(); l++)
             {
-              if (inUse[l] == lines[j].dependencies[1] || inUse[l] == lines[j].dependencies[2])
+              if (inUse[l].first == lines[j].dependencies[1] || inUse[l].first == lines[j].dependencies[2])
               {
-                dependFound = true;
+                if (j - inUse[l].second == 1)
+                {
+                  close = true;
+                }
+                else if (j - inUse[l].second == 2)
+                {
+                  far = true;
+                }
               }
             }
-            if (dependFound)
+            if (close)
             {
-              insertNop(lines, pc, lines[j].skip, 2);
-              lines[j].stage--;
-              std::cout << lines[j+1].output;
-              continue;
+              if (cooldown > 0)
+              {
+                stallRest = true;
+              }
+              else
+              {
+                cooldown = 3;
+                twoInsert = true;
+                holdJ = j;
+                stallRest = true;
+              }
+            }
+            else if (far)
+            {
+              cooldown = 2;
+              toInsert = true;
+              holdJ = j;
+              stallRest = true;
             }
           }
         }
@@ -225,10 +255,10 @@ int main(int argc, char* argv[]) {
       // EX stage
       // computation is made here
       else if(lines[j].stage == 2) {
-        //add product register to use to potential dependencies
+        //add result register to use to potential dependencies
         if(lines[j].type != "beq")
         {
-          inUse.push_back(lines[j].dependencies[0]);
+          inUse.push_back(std::make_pair(lines[j].dependencies[0], j));
         }
         if(!lines[j].isNop) {
           lines[j].output[k] = 'E';
@@ -319,7 +349,26 @@ int main(int argc, char* argv[]) {
         inUse.erase(inUse.begin() + regIndex);
       }
       std::cout << lines[j].output;
-      ++lines[j].stage;
+      if (!stallRest)
+      {
+        ++lines[j].stage;
+      }
+    }
+    if (toInsert)
+    {
+      insertNop(lines, i, lines[holdJ].skip, 1);
+      toInsert = false;
+    }
+    else if (twoInsert)
+    {
+      insertNop(lines, i, lines[holdJ].skip, 1);
+      insertNop(lines, i, lines[holdJ].skip, 1);
+      twoInsert = false;
+      pc++;
+    }
+    if (cooldown > 0)
+    {
+      cooldown--;
     }
     // output all registers and their values
     if(pc < lines.size())
