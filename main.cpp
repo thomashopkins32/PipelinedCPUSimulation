@@ -155,9 +155,6 @@ int main(int argc, char* argv[]) {
     // lines[i].stage -= count-1;
     lines[i].skip += count-1;
   }
-  // for(unsigned i = 0; i < lines.size(); ++i) {
-  //   lines[i].printInstInfo();
-  // }
   // Starting simulation assuming that all instructions are ready
   std::cout << "START OF SIMULATION";
   if(forwarding)
@@ -166,8 +163,6 @@ int main(int argc, char* argv[]) {
     std::cout << " (no forwarding)" << std::endl;
   unsigned pc = 1; // Program counter, used for reading one line at a time
   for(int i = 0; i <= 16; ++i) {
-    // for(unsigned j = 0; j < lines.size(); ++j)
-    //   lines[j].printInstInfo();
     if(lines[pc-1].isLabel) {
       if(pc < lines.size())
         ++pc;
