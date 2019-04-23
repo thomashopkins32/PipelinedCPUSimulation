@@ -150,7 +150,7 @@ int main(int argc, char* argv[]) {
   bool toInsert = false;
   bool twoInsert = false;
   int cooldown = 0;
-  int holdJ = -1;
+  unsigned holdJ = 0;
 
   // initialize stages
   int count = 0;
@@ -174,7 +174,6 @@ int main(int argc, char* argv[]) {
       continue;
     }
     initialPrint();
-    bool stallRest = false;
     // Loop up to current instruction
     for(unsigned j = 0; j < pc; ++j) {
       if(lines[j].isLabel)
@@ -226,24 +225,15 @@ int main(int argc, char* argv[]) {
             }
             if (close)
             {
-              if (cooldown > 0)
-              {
-                stallRest = true;
-              }
-              else
-              {
                 cooldown = 3;
                 twoInsert = true;
                 holdJ = j;
-                stallRest = true;
-              }
             }
             else if (far)
             {
               cooldown = 2;
               toInsert = true;
               holdJ = j;
-              stallRest = true;
             }
           }
         }
@@ -337,34 +327,53 @@ int main(int argc, char* argv[]) {
         }
         else
           lines[j].output[k] = '*';
-        //remove product register from inUse
-        int regIndex = findRegister(inUse, lines[j].dependencies[0]);
-        //if this line causes a seg fault it's because it's trying to remove
-        //somthing that's not there, that shouldn't happen so I didn't make an if to check
-        //so if it does we know that something fucked up
-        inUse.erase(inUse.begin() + regIndex);
+        if(!forwarding) {
+          //remove product register from inUse
+          int regIndex = findRegister(inUse, lines[j].dependencies[0]);
+          inUse.erase(inUse.begin() + regIndex);
+        }
       }
       std::cout << lines[j].output;
-      if (!stallRest)
-      {
-        ++lines[j].stage;
+      if(!forwarding) {
+        if (lines[j].stall == 0)
+        {
+          ++lines[j].stage;
+        }
+        else
+          --lines[j].stall;
       }
+      else
+        ++lines[j].stage;
     }
-    if (toInsert)
-    {
-      insertNop(lines, i, lines[holdJ].skip, 1);
-      toInsert = false;
-    }
-    else if (twoInsert)
-    {
-      insertNop(lines, i, lines[holdJ].skip, 1);
-      insertNop(lines, i, lines[holdJ].skip, 1);
-      twoInsert = false;
-      pc++;
-    }
-    if (cooldown > 0)
-    {
-      cooldown--;
+    if(!forwarding) {
+      if (toInsert)
+      {
+        insertNop(lines, i, lines[holdJ].skip, 1);
+        lines[holdJ+1].stall = 0;
+        --lines[holdJ+1].stage;
+        if(holdJ+2 < lines.size()) {
+          lines[holdJ+2].stall = 0;
+          --lines[holdJ+2].stage;
+        }
+        toInsert = false;
+      }
+      else if (twoInsert)
+      {
+        insertNop(lines, i, lines[holdJ].skip, 1);
+        insertNop(lines, i, lines[holdJ].skip, 1);
+        lines[holdJ+2].stall = 1;
+        --lines[holdJ+2].stage;
+        if(holdJ+3 < lines.size()) {
+          lines[holdJ+3].stall = 1;
+          --lines[holdJ+3].stage;
+        }
+        twoInsert = false;
+        pc++;
+      }
+      if (cooldown > 0)
+      {
+        cooldown--;
+      }
     }
     // output all registers and their values
     if(pc < lines.size())

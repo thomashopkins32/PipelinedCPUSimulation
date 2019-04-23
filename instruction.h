@@ -22,7 +22,7 @@ public:
   int value;
   bool isNop;
   bool isLabel;
-  bool two;
+  int stall;
 };
 
 bool operator==(const Instruction& a, const Instruction& b);

@@ -13,7 +13,7 @@ Instruction::Instruction(const std::string& line) {
   this->value = 0;
   this->isNop = false;
   this->isLabel = false;
-  this->two = false;
+  this->stall = 0;
   // Get the current operation and store it in instruction object
   // and assign operation to instruction type
   int i = 0;
@@ -61,7 +61,7 @@ Instruction::Instruction(const Instruction& instr) {
   this->value = instr.value;
   this->isNop = instr.isNop;
   this->isLabel = instr.isLabel;
-  this->two = instr.two;
+  this->stall = instr.stall;
 }
 
 //Helper function to print the Instruction info
