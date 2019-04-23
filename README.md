@@ -15,9 +15,9 @@ Please comment your code so we know what everything does.
 ### - Pipelining structure (Completed)
   - ~~create basic structure for pipeline~~
   - ~~implement each step of the pipeline (IF, ID, EX, MEM, WB)~~
-### - Handling Hazards (currently working on this: Jason)
+### - Handling Hazards (Completed)
   - ~~Data Hazards (exactly like homework 5)~~
-  - Control Hazards (jumping and branching)
+  - ~~Control Hazards (jumping and branching)~~
   - ~~inserting nop's in correct places~~
 ### - Implementing forwarding (Completed)
   - ~~Used for data hazards to not require a stall~~
