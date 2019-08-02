@@ -1,5 +1,3 @@
-Repository for CSCI 2500 Final Project.
-
 ## To-do list:
 (put your name next to what you want to work on)
 
